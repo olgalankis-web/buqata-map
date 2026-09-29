@@ -138,10 +138,9 @@
 
   .filters{
     position:sticky; top:59px; z-index:1029;
-    display:flex; gap:8px; padding:10px 16px; overflow-x:auto;
-    background:var(--bg); border-bottom:1px solid var(--line); scrollbar-width:none;
+    display:flex; flex-wrap:wrap; gap:8px; padding:10px 16px;
+    background:var(--bg); border-bottom:1px solid var(--line);
   }
-  .filters::-webkit-scrollbar{ display:none; }
   .chip{
     flex:none; display:flex; align-items:center; gap:6px;
     padding:7px 12px; border-radius:999px; border:1px solid var(--line-strong);
