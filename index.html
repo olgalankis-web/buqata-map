@@ -675,6 +675,19 @@
     btn.addEventListener("click", function(){ setLang(btn.getAttribute("data-lang")); });
   });
 
+  // Extra escape hatches for the welcome screen, in case the CTA button click
+  // doesn't land for some reason (a stuck welcome screen blocks the entire
+  // page, since it sits above everything else) - clicking the dark area
+  // around the card, or pressing Escape, both dismiss it too.
+  elIntroBackdrop.addEventListener("click", function(e){
+    if(e.target === elIntroBackdrop) hideIntro();
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key !== "Escape") return;
+    if(!elIntroBackdrop.hidden){ hideIntro(); return; }
+    if(elCard.classList.contains("open")){ closePlace(); }
+  });
+
   // =========================================================================
   // 4. Boot
   // =========================================================================
