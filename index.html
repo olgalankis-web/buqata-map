@@ -18,6 +18,12 @@
      בלי זה הדף יקבל דף התחברות של גוגל במקום JSON, והנתונים לא ייטענו.
   2. מזהה הגיליון מוגדר למטה תחת SPREADSHEET_ID, ושמות שלוש הלשוניות תחת
      SHEET_NAMES. אם משנים את שמות הלשוניות בקובץ - צריך לעדכן גם כאן.
+  1ב. מיקום מקום: אפשר להשתמש בעמודה אחת בשם "מיקום" בלשונית "מקומות", בפורמט
+      "lat, lng" (בדיוק כמו שגוגל מפות נותן בהעתקה, למשל 32.05260885740614,
+      34.756262289186914). אם העמודה הזו קיימת וממולאת - היא תמיד עדיפה.
+      אם היא ריקה/לא קיימת בשורה מסוימת, הקוד ייפול חזרה לשתי העמודות הישנות
+      "קו רוחב (lat)" ו"קו אורך (lng)". אפשר להשאיר את העמודות הישנות בגיליון
+      בלי לפגוע בכלום.
   3. הדף קורא את הנתונים בזמן טעינה מהדפדפן של המבקר (לא בזמן build), אז
      כל שינוי בגיליון מופיע באתר החי מייד עם רענון הדף - בלי לגעת בקוד.
   4. הקובץ לא יעבוד אם פותחים אותו ישירות מהדיסק (file://) בגלל CORS -
@@ -101,9 +107,16 @@
   .brand-title{ font-size:16px; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .brand-sub{ font-size:10.5px; color:var(--ink-faint); letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .top-actions{ display:flex; align-items:center; gap:6px; flex:none; }
-  .lang-switch{ display:flex; align-items:center; gap:2px; background:var(--bg); border:1px solid var(--line); border-radius:999px; padding:3px; }
-  .lang-switch button{ padding:5px 9px; border-radius:999px; font-size:12px; color:var(--ink-soft); white-space:nowrap; }
-  .lang-switch button[aria-pressed="true"]{ background:var(--surface-raised); color:var(--ink); box-shadow:var(--shadow-sm); font-weight:600; }
+  .lang-switch{ position:relative; }
+  .lang-menu{
+    position:absolute; top:calc(100% + 8px); inset-inline-end:0; margin:0;
+    background:var(--surface-raised); border:1px solid var(--line); border-radius:14px;
+    box-shadow:var(--shadow); padding:6px; display:flex; flex-direction:column; gap:2px;
+    min-width:130px; z-index:35; list-style:none;
+  }
+  .lang-menu[hidden]{ display:none; }
+  .lang-menu button{ padding:9px 12px; border-radius:9px; font-size:13px; color:var(--ink-soft); text-align:start; width:100%; }
+  .lang-menu button[aria-pressed="true"]{ background:var(--bg); color:var(--ink); font-weight:600; }
   .icon-btn{
     width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
     border:1px solid var(--line); color:var(--ink-soft); flex:none;
@@ -222,11 +235,11 @@
     .filters{ top:63px; }
     #backdrop{ display:none; }
     #card{
-      position:static; inset:auto; transform:none !important; max-height:none;
-      flex:0 0 380px; width:380px; border-radius:0; box-shadow:none;
-      border-inline-start:1px solid var(--line); display:flex; flex-direction:column;
+      position:relative; inset:auto; transform:none !important; max-height:none;
+      flex:0 0 380px; width:380px; border-radius:0; box-shadow:none; order:-1;
+      border-inline-end:1px solid var(--line); display:flex; flex-direction:column;
     }
-    .card-grip{ display:none; } .card-close{ display:none; }
+    .card-grip{ display:none; }
     #card .card-scroll{ overflow-y:auto; flex:1; }
     #intro-backdrop{ align-items:center; }
   }
@@ -243,14 +256,18 @@
       </div>
       <div class="brand-text">
         <div class="brand-title" id="brand-title-el">נכנסים לבוקעתא</div>
-        <div class="brand-sub" data-t="liveTag">מחובר ל-Google Sheets</div>
       </div>
     </div>
     <div class="top-actions">
-      <div class="lang-switch" role="group" aria-label="שפה">
-        <button type="button" data-lang="he" aria-pressed="true">עברית</button>
-        <button type="button" data-lang="ar" aria-pressed="false">العربية</button>
-        <button type="button" data-lang="en" aria-pressed="false">English</button>
+      <div class="lang-switch">
+        <button type="button" class="icon-btn" id="lang-toggle" aria-haspopup="true" aria-expanded="false" aria-label="שפה">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18" stroke-linecap="round"/><path d="M12 3c2.6 2.7 4 6 4 9s-1.4 6.3-4 9c-2.6-2.7-4-6-4-9s1.4-6.3 4-9Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="lang-menu" id="lang-menu" role="menu" hidden>
+          <button type="button" data-lang="he" aria-pressed="true" role="menuitem">עברית</button>
+          <button type="button" data-lang="ar" aria-pressed="false" role="menuitem">العربية</button>
+          <button type="button" data-lang="en" aria-pressed="false" role="menuitem">English</button>
+        </div>
       </div>
       <button type="button" class="icon-btn" id="about-btn">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6" stroke-linecap="round"/><circle cx="12" cy="7.6" r=".9" fill="currentColor" stroke="none"/></svg>
@@ -268,8 +285,8 @@
 
     <aside id="card" aria-live="polite">
       <div class="card-grip"></div>
-      <button type="button" class="card-close" id="card-close-btn" aria-label="">
-        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg>
+      <button type="button" class="card-close" id="card-close-btn" aria-label="סגירה">
+        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
       </button>
       <div class="card-scroll">
         <div id="card-empty" class="card-empty">
@@ -458,6 +475,23 @@
   function num(v){ var n = parseFloat(v); return isNaN(n) ? null : n; }
   function str(v){ return (v === null || v === undefined) ? "" : String(v).trim(); }
 
+  // Location: prefer a single "מיקום" column in "lat, lng" format (the same
+  // format you get when copying a location straight out of Google Maps, and
+  // the format the reference map uses) - falls back to the older two separate
+  // columns (קו רוחב (lat) / קו אורך (lng)) so nothing breaks if the sheet
+  // hasn't been switched over to the combined column yet.
+  function parseLocCol(r){
+    var s = str(r["מיקום"]);
+    if(!s) return null;
+    var parts = s.split(",");
+    if(parts.length < 2) return null;
+    var lat = num(parts[0]), lng = num(parts[1]);
+    if(lat === null || lng === null) return null;
+    return { lat: lat, lng: lng };
+  }
+  function locLat(r){ var loc = parseLocCol(r); return loc ? loc.lat : num(r["קו רוחב (lat)"]); }
+  function locLng(r){ var loc = parseLocCol(r); return loc ? loc.lng : num(r["קו אורך (lng)"]); }
+
   function loadAll(){
     return Promise.all([
       fetchSheetRows(SHEET_NAMES.places),
@@ -490,8 +524,8 @@
             story: { he: str(r["הסיפור – עברית"]), ar: str(r["הסיפור – ערבית"]), en: str(r["הסיפור – אנגלית"]) },
             hours: { he: str(r["שעות פתיחה – עברית"]), ar: str(r["שעות פתיחה – ערבית"]), en: str(r["שעות פתיחה – אנגלית"]) },
             cats: cats,
-            lat: num(r["קו רוחב (lat)"]),
-            lng: num(r["קו אורך (lng)"]),
+            lat: locLat(r),
+            lng: locLng(r),
             phone: str(r["טלפון למארח"]),
             website: str(r["קישור לאתר"]),
             instagram: str(r["קישור לאינסטגרם"]),
@@ -532,6 +566,8 @@
   var elIntroBackdrop = document.getElementById("intro-backdrop");
   var elStatusBanner = document.getElementById("status-banner");
   var elStatusText = document.getElementById("status-text");
+  var elLangToggle = document.getElementById("lang-toggle");
+  var elLangMenu = document.getElementById("lang-menu");
 
   function safeGet(key){ try{ return localStorage.getItem(key); }catch(e){ return null; } }
   function safeSet(key,val){ try{ localStorage.setItem(key,val); }catch(e){} }
@@ -651,7 +687,7 @@
     state.lang = lang;
     var dir = lang === "en" ? "ltr" : "rtl";
     elApp.setAttribute("dir", dir); elApp.setAttribute("lang", lang);
-    Array.prototype.forEach.call(document.querySelectorAll(".lang-switch button"), function(btn){
+    Array.prototype.forEach.call(document.querySelectorAll(".lang-switch button[data-lang]"), function(btn){
       btn.setAttribute("aria-pressed", btn.getAttribute("data-lang") === lang ? "true":"false");
     });
     applyStaticText();
@@ -671,8 +707,23 @@
   document.getElementById("intro-cta").addEventListener("click", hideIntro);
   document.getElementById("card-close-btn").addEventListener("click", closePlace);
   elBackdrop.addEventListener("click", closePlace);
-  Array.prototype.forEach.call(document.querySelectorAll(".lang-switch button"), function(btn){
-    btn.addEventListener("click", function(){ setLang(btn.getAttribute("data-lang")); });
+
+  // Language switcher: collapsed under a single globe icon; clicking it opens
+  // a small menu with the three language options, picking one applies the
+  // language and closes the menu again.
+  function openLangMenu(){ elLangMenu.hidden = false; elLangToggle.setAttribute("aria-expanded","true"); }
+  function closeLangMenu(){ elLangMenu.hidden = true; elLangToggle.setAttribute("aria-expanded","false"); }
+  elLangToggle.addEventListener("click", function(e){
+    e.stopPropagation();
+    if(elLangMenu.hidden) openLangMenu(); else closeLangMenu();
+  });
+  document.addEventListener("click", function(e){
+    if(!elLangMenu.hidden && e.target !== elLangToggle && !elLangMenu.contains(e.target)){
+      closeLangMenu();
+    }
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".lang-switch button[data-lang]"), function(btn){
+    btn.addEventListener("click", function(){ setLang(btn.getAttribute("data-lang")); closeLangMenu(); });
   });
 
   // Extra escape hatches for the welcome screen, in case the CTA button click
@@ -685,6 +736,7 @@
   document.addEventListener("keydown", function(e){
     if(e.key !== "Escape") return;
     if(!elIntroBackdrop.hidden){ hideIntro(); return; }
+    if(!elLangMenu.hidden){ closeLangMenu(); return; }
     if(elCard.classList.contains("open")){ closePlace(); }
   });
 
@@ -707,7 +759,7 @@
   state.lang = savedLang;
   elApp.setAttribute("dir", savedLang==="en"?"ltr":"rtl");
   elApp.setAttribute("lang", savedLang);
-  Array.prototype.forEach.call(document.querySelectorAll(".lang-switch button"), function(btn){
+  Array.prototype.forEach.call(document.querySelectorAll(".lang-switch button[data-lang]"), function(btn){
     btn.setAttribute("aria-pressed", btn.getAttribute("data-lang")===savedLang ? "true":"false");
   });
   elStatusText.textContent = t("loading");
