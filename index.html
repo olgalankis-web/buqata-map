@@ -1,0 +1,724 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>נכנסים לבוקעתא</title>
+
+<!--
+  ===========================================================================
+  נכנסים לבוקעתא — גרסה מחוברת ל-Google Sheets (חיה)
+  ===========================================================================
+  קובץ עצמאי אחד, מוכן להעלאה לכל אחסון סטטי (GitHub Pages, Netlify וכו').
+
+  לפני שמעלים בפועל:
+  1. קובץ הגיליון (עם שלוש הלשוניות: מקומות | קטגוריות | הגדרות) חייב להיות
+     משותף כ"כל מי שיש לו את הקישור - צפייה":
+     Share -> General access -> Anyone with the link -> Viewer.
+     בלי זה הדף יקבל דף התחברות של גוגל במקום JSON, והנתונים לא ייטענו.
+  2. מזהה הגיליון מוגדר למטה תחת SPREADSHEET_ID, ושמות שלוש הלשוניות תחת
+     SHEET_NAMES. אם משנים את שמות הלשוניות בקובץ - צריך לעדכן גם כאן.
+  3. הדף קורא את הנתונים בזמן טעינה מהדפדפן של המבקר (לא בזמן build), אז
+     כל שינוי בגיליון מופיע באתר החי מייד עם רענון הדף - בלי לגעת בקוד.
+  4. הקובץ לא יעבוד אם פותחים אותו ישירות מהדיסק (file://) בגלל CORS -
+     צריך לארח אותו על כתובת https אמיתית (GitHub Pages וכו').
+  ===========================================================================
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@500;600;700&family=Noto+Serif+Hebrew:wght@500;600;700&family=Noto+Serif+Arabic:wght@500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Hebrew:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+
+<style>
+  :root{
+    --bg:#F1F2E9; --surface:#FDFCF7; --surface-raised:#FFFFFF;
+    --ink:#221F1A; --ink-soft:#615A4B; --ink-faint:#8C8471;
+    --line:#DEDACB; --line-strong:#C9C3AF;
+    --cherry:#B85471; --olive:#586A42; --gold:#B4802F;
+    --soil:#8A5A3B; --teal:#3F7185; --plum:#544C74;
+    --shadow:0 12px 32px -12px rgba(34,31,26,0.28);
+    --shadow-sm:0 2px 10px -4px rgba(34,31,26,0.25);
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#17181A; --surface:#1F2023; --surface-raised:#25262A;
+      --ink:#F2EEE3; --ink-soft:#BDB6A5; --ink-faint:#847D6C;
+      --line:#33352F; --line-strong:#42443C;
+      --cherry:#DD8FA3; --olive:#94AC77; --gold:#DCAB5F;
+      --soil:#BB8C6A; --teal:#7DB0C0; --plum:#A79CD1;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#17181A; --surface:#1F2023; --surface-raised:#25262A;
+    --ink:#F2EEE3; --ink-soft:#BDB6A5; --ink-faint:#847D6C;
+    --line:#33352F; --line-strong:#42443C;
+    --cherry:#DD8FA3; --olive:#94AC77; --gold:#DCAB5F;
+    --soil:#BB8C6A; --teal:#7DB0C0; --plum:#A79CD1;
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%; margin:0; background:var(--bg);}
+  img{max-width:100%;}
+  [hidden]{display:none !important;}
+
+  #app{
+    height:100%; min-height:100%; display:flex; flex-direction:column;
+    background:var(--bg); color:var(--ink);
+    font-family:'Noto Sans','Noto Sans Hebrew','Noto Sans Arabic',sans-serif;
+    overflow:hidden;
+  }
+  #app[dir="rtl"]{ font-family:'Noto Sans Hebrew','Noto Sans Arabic','Noto Sans',sans-serif; }
+  #app[lang="ar"]{ font-family:'Noto Sans Arabic','Noto Sans Hebrew','Noto Sans',sans-serif; }
+
+  h1,h2,h3,.display{
+    font-family:'Noto Serif','Noto Serif Hebrew','Noto Serif Arabic',serif;
+    font-weight:600; text-wrap:balance; margin:0;
+  }
+  [dir="rtl"] h1,[dir="rtl"] h2,[dir="rtl"] h3,[dir="rtl"] .display{ font-family:'Noto Serif Hebrew','Noto Serif Arabic','Noto Serif',serif; }
+  [lang="ar"] h1,[lang="ar"] h2,[lang="ar"] h3,[lang="ar"] .display{ font-family:'Noto Serif Arabic','Noto Serif Hebrew','Noto Serif',serif; }
+
+  button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; }
+  a{ color:inherit; }
+  p{ margin:0; }
+
+  .topbar{
+    position:sticky; top:0; z-index:30;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:12px 16px; background:var(--surface); border-bottom:1px solid var(--line);
+  }
+  .brand{ display:flex; align-items:center; gap:10px; min-width:0; }
+  .brand-mark{
+    width:34px; height:34px; flex:none; border-radius:50%;
+    background:linear-gradient(155deg,var(--cherry),var(--olive));
+    display:flex; align-items:center; justify-content:center;
+  }
+  .brand-mark svg{ width:18px; height:18px; stroke:#fff; fill:none; stroke-width:1.8; }
+  .brand-text{ min-width:0; }
+  .brand-title{ font-size:16px; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .brand-sub{ font-size:10.5px; color:var(--ink-faint); letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .top-actions{ display:flex; align-items:center; gap:6px; flex:none; }
+  .lang-switch{ display:flex; align-items:center; gap:2px; background:var(--bg); border:1px solid var(--line); border-radius:999px; padding:3px; }
+  .lang-switch button{ padding:5px 9px; border-radius:999px; font-size:12px; color:var(--ink-soft); white-space:nowrap; }
+  .lang-switch button[aria-pressed="true"]{ background:var(--surface-raised); color:var(--ink); box-shadow:var(--shadow-sm); font-weight:600; }
+  .icon-btn{
+    width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--line); color:var(--ink-soft); flex:none;
+  }
+  .icon-btn svg{ width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.8; }
+
+  .filters{
+    position:sticky; top:59px; z-index:29;
+    display:flex; gap:8px; padding:10px 16px; overflow-x:auto;
+    background:var(--bg); border-bottom:1px solid var(--line); scrollbar-width:none;
+  }
+  .filters::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex:none; display:flex; align-items:center; gap:6px;
+    padding:7px 12px; border-radius:999px; border:1px solid var(--line-strong);
+    background:var(--surface); font-size:12.5px; color:var(--ink-soft); white-space:nowrap;
+  }
+  .chip svg{ width:14px; height:14px; stroke:var(--chip-color,currentColor); fill:none; stroke-width:1.9; }
+  .chip[aria-pressed="true"]{ background:var(--chip-color); border-color:var(--chip-color); color:#fff; }
+  .chip[aria-pressed="true"] svg{ stroke:#fff; }
+
+  .layout{ position:relative; flex:1; min-height:0; display:flex; }
+  .map-wrap{ position:relative; flex:1; min-width:0; }
+  #leaflet-map{ position:absolute; inset:0; width:100%; height:100%; background:var(--bg); }
+
+  .leaflet-marker-pin{ display:flex; align-items:center; justify-content:center; }
+  .leaflet-marker-pin .dot{
+    width:32px; height:32px; border-radius:50%; background:var(--m-color);
+    border:3px solid var(--surface); box-shadow:var(--shadow-sm);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .leaflet-marker-pin svg{ width:16px; height:16px; stroke:#fff; fill:none; stroke-width:2.3; }
+  .leaflet-marker-pin.selected .dot{ border-color:var(--ink); }
+
+  .status-banner{
+    position:absolute; inset-inline:14px; top:14px; z-index:5;
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:10px 14px; font-size:12.5px; color:var(--ink-soft); box-shadow:var(--shadow-sm);
+    display:flex; align-items:center; gap:8px;
+  }
+  .status-banner.error{ color:#9B3B3B; border-color:#D9AFAF; }
+  .status-dot{ width:8px; height:8px; border-radius:50%; background:var(--gold); flex:none; animation:blink 1.4s ease-in-out infinite; }
+  @keyframes blink{ 0%,100%{opacity:.4;} 50%{opacity:1;} }
+
+  #backdrop{
+    position:fixed; inset:0; background:rgba(20,18,14,.38); opacity:0; pointer-events:none;
+    transition:opacity .25s ease; z-index:24;
+  }
+  #backdrop.open{ opacity:1; pointer-events:auto; }
+
+  #card{
+    position:fixed; inset-inline:0; bottom:0; z-index:25;
+    max-height:80vh; max-height:80dvh;
+    background:var(--surface-raised);
+    border-start-start-radius:20px; border-start-end-radius:20px;
+    box-shadow:var(--shadow); transform:translateY(102%);
+    transition:transform .32s cubic-bezier(.32,.72,0,1);
+    overflow-y:auto; overscroll-behavior:contain;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  #card.open{ transform:translateY(0); }
+  .card-grip{ width:36px; height:4px; border-radius:99px; background:var(--line-strong); margin:10px auto 2px; }
+  .card-close{
+    position:absolute; inset-inline-end:12px; top:14px; z-index:2;
+    width:32px; height:32px; border-radius:50%; background:var(--surface);
+    border:1px solid var(--line); display:flex; align-items:center; justify-content:center; color:var(--ink-soft);
+  }
+  .card-close svg{ width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:2; }
+
+  .card-empty{ padding:40px 24px 48px; text-align:center; color:var(--ink-faint); font-size:13.5px; line-height:1.6; }
+  .card-empty svg{ width:30px; height:30px; stroke:var(--ink-faint); fill:none; stroke-width:1.5; margin-bottom:10px; }
+
+  .card-body{ padding:18px 20px 28px; }
+  .card-title{ font-size:22px; line-height:1.25; margin-bottom:2px; }
+  .card-cats{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; margin-bottom:10px; }
+  .card-cat-tag{ display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:4px 9px; border-radius:999px; color:#fff; }
+  .card-cat-tag svg{ width:11px; height:11px; stroke:#fff; fill:none; stroke-width:2; }
+
+  .card-story-label{ display:flex; align-items:center; gap:7px; margin-top:18px; margin-bottom:8px; font-size:11px; letter-spacing:.04em; color:var(--ink-faint); text-transform:uppercase; }
+  .card-story-label .line{ flex:1; height:1px; background:var(--line); }
+  .card-host{ font-size:13.5px; color:var(--ink-soft); margin-bottom:6px; }
+  .card-host b{ color:var(--ink); font-weight:600; }
+  .card-story{ font-size:15px; line-height:1.75; color:var(--ink); }
+
+  .card-meta{ margin-top:22px; display:flex; flex-direction:column; gap:11px; }
+  .card-meta-row{ display:flex; align-items:flex-start; gap:10px; font-size:13.5px; }
+  .card-meta-row svg{ width:17px; height:17px; flex:none; margin-top:1px; stroke:var(--ink-soft); fill:none; stroke-width:1.7; }
+  .card-meta-label{ color:var(--ink-faint); font-size:11px; display:block; margin-bottom:1px; }
+  .card-meta-val{ color:var(--ink); }
+  .card-phone-link{ text-decoration:none; border-bottom:1px solid var(--line-strong); }
+
+  .card-actions{ margin-top:20px; display:flex; flex-wrap:wrap; gap:9px; }
+  .btn{ display:inline-flex; align-items:center; gap:7px; padding:11px 16px; border-radius:12px; font-size:13.5px; font-weight:600; text-decoration:none; border:1px solid transparent; }
+  .btn svg{ width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; }
+  .btn-primary{ background:var(--ink); color:var(--surface); }
+  .btn-secondary{ background:var(--surface); border-color:var(--line-strong); color:var(--ink); }
+
+  #intro-backdrop{
+    position:fixed; inset:0; background:rgba(20,18,14,.5); z-index:40;
+    display:flex; align-items:flex-end; justify-content:center;
+  }
+  #intro-backdrop[hidden]{ display:none; }
+  .intro-modal{
+    width:100%; max-width:460px; background:var(--surface-raised);
+    border-radius:20px 20px 0 0; padding:26px 24px 28px; box-shadow:var(--shadow);
+    max-height:88vh; max-height:88dvh; overflow-y:auto;
+  }
+  @media (min-width:640px){ #intro-backdrop{ align-items:center; } .intro-modal{ border-radius:20px; } }
+  .intro-mark{ width:46px; height:46px; border-radius:50%; margin-bottom:16px; background:linear-gradient(155deg,var(--cherry),var(--olive)); display:flex; align-items:center; justify-content:center; }
+  .intro-mark svg{ width:24px; height:24px; stroke:#fff; fill:none; stroke-width:1.6; }
+  .intro-title{ font-size:23px; margin-bottom:14px; }
+  .intro-body{ font-size:14.5px; line-height:1.85; color:var(--ink-soft); white-space:pre-line; }
+  .intro-cta{ margin-top:22px; width:100%; justify-content:center; padding:13px; }
+
+  @media (min-width:860px){
+    .filters{ top:63px; }
+    #backdrop{ display:none; }
+    #card{
+      position:static; inset:auto; transform:none !important; max-height:none;
+      flex:0 0 380px; width:380px; border-radius:0; box-shadow:none;
+      border-inline-start:1px solid var(--line); display:flex; flex-direction:column;
+    }
+    .card-grip{ display:none; } .card-close{ display:none; }
+    #card .card-scroll{ overflow-y:auto; flex:1; }
+    #intro-backdrop{ align-items:center; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app" dir="rtl" lang="he">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title" id="brand-title-el">נכנסים לבוקעתא</div>
+        <div class="brand-sub" data-t="liveTag">מחובר ל-Google Sheets</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <div class="lang-switch" role="group" aria-label="שפה">
+        <button type="button" data-lang="he" aria-pressed="true">עברית</button>
+        <button type="button" data-lang="ar" aria-pressed="false">العربية</button>
+        <button type="button" data-lang="en" aria-pressed="false">English</button>
+      </div>
+      <button type="button" class="icon-btn" id="about-btn">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6" stroke-linecap="round"/><circle cx="12" cy="7.6" r=".9" fill="currentColor" stroke="none"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <nav class="filters" id="filters" aria-label="קטגוריות"></nav>
+
+  <div class="layout">
+    <div class="map-wrap">
+      <div id="leaflet-map"></div>
+      <div class="status-banner" id="status-banner"><span class="status-dot"></span><span id="status-text">טוען נתונים מהגיליונות…</span></div>
+    </div>
+
+    <aside id="card" aria-live="polite">
+      <div class="card-grip"></div>
+      <button type="button" class="card-close" id="card-close-btn" aria-label="">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg>
+      </button>
+      <div class="card-scroll">
+        <div id="card-empty" class="card-empty">
+          <svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.8-6.5-11A6.5 6.5 0 0 1 18.5 10c0 5.2-6.5 11-6.5 11Z" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.2"/></svg>
+          <div data-t="emptyState">בחרו נקודה על המפה כדי לפגוש את הסיפור שמאחוריה.</div>
+        </div>
+        <div id="card-place" class="card-body" hidden></div>
+      </div>
+    </aside>
+  </div>
+
+  <div id="backdrop"></div>
+
+  <div id="intro-backdrop" hidden>
+    <div class="intro-modal" role="dialog" aria-modal="true">
+      <div class="intro-mark">
+        <svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h2 class="intro-title" id="intro-title-el">נכנסים לבוקעתא</h2>
+      <p class="intro-body" id="intro-body-el"></p>
+      <button type="button" class="btn btn-primary intro-cta" id="intro-cta">בואו נתחיל</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+(function(){
+  "use strict";
+
+  // =========================================================================
+  // 1. CONFIG — the only part you should need to touch
+  // =========================================================================
+  var SPREADSHEET_ID = "1vP6yExa-dBUz76-MiwOwKHtBI6Dkh2cA8PjVPFZ_JI4"; // בוקעתא — מקומות, קטגוריות, הגדרות
+  var SHEET_NAMES = {
+    places:     "מקומות",
+    categories: "קטגוריות",
+    settings:   "הגדרות"
+  };
+  var MAP_CENTER = [33.2115, 35.7995]; // בוקעתא
+  var MAP_ZOOM = 15;
+
+  // Fallback colors if a category row in the Sheet has no color / fails to load.
+  var FALLBACK_COLORS = ["#B4802F","#B85471","#586A42","#8A5A3B","#3F7185","#544C74"];
+
+  var ICONS = {
+    "cup": '<path d="M5 8h13v4.5A5.5 5.5 0 0 1 12.5 18h-2A5.5 5.5 0 0 1 5 12.5V8Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 9.2h1.2a2.3 2.3 0 0 1 0 4.6H18"/><path d="M9 18v2.4M12 18v2.4" stroke-linecap="round"/>',
+    "house-heart": '<path d="M4 11 12 4l8 7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 14.6c-1.1-1.3-3.3-1-3.3.7 0 1.7 3.3 3.6 3.3 3.6s3.3-1.9 3.3-3.6c0-1.7-2.2-2-3.3-.7Z" stroke-linejoin="round"/>',
+    "basket": '<path d="M5 9h14l-1.4 8.6A2 2 0 0 1 15.6 19H8.4a2 2 0 0 1-2-1.4L5 9Z" stroke-linejoin="round"/><path d="M8 9 9 4h6l1 5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 12.5v3M14.5 12.5v3" stroke-linecap="round"/>',
+    "cherries": '<circle cx="9" cy="16.2" r="3"/><circle cx="15.2" cy="13.8" r="3"/><path d="M9 13.4C9 9.8 11.7 7 15 6M15.2 11C15.2 8.4 16.6 6.6 18 5.6" stroke-linecap="round"/>',
+    "sparkle": '<path d="M12 3c.7 3.2 2.5 5 5.7 5.7C14.5 9.4 12.7 11.2 12 14.4c-.7-3.2-2.5-5-5.7-5.7C9.5 8 11.3 6.2 12 3Z" stroke-linejoin="round"/>',
+    "bed": '<path d="M3 19v-6.5A1.8 1.8 0 0 1 4.8 10.7h4.9a1.8 1.8 0 0 1 1.8 1.8V16" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 19h18"/><path d="M11.5 13.2H19a2 2 0 0 1 2 2V19" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="13.4" r="1.3"/>'
+  };
+
+  var STRINGS = {
+    he:{ liveTag:"מחובר ל-Google Sheets", aboutTitle:"על המסלול", emptyState:"בחרו נקודה על המפה כדי לפגוש את הסיפור שמאחוריה.",
+      hostLabel:"מארח/ת", hoursLabel:"שעות פעילות", phoneLabel:"טלפון", directionsBtn:"איך מגיעים?", wazeBtn:"Waze", mapsBtn:"Google Maps",
+      siteBtn:"אתר", instaBtn:"אינסטגרם", filterAria:"סינון לפי קטגוריה", loading:"טוען נתונים מהגיליונות…",
+      loadError:"לא הצלחתי לטעון את הנתונים מהגיליון. ודאו שהגיליון משותף כ‑\"כל מי שיש לו את הקישור – צפייה\".",
+      loaded:"מחובר לגיליונות · " },
+    ar:{ liveTag:"متصل بجداول Google", aboutTitle:"عن المسار", emptyState:"اختاروا نقطة على الخريطة للقاء القصة التي تقف وراءها.",
+      hostLabel:"المضيف/ة", hoursLabel:"ساعات العمل", phoneLabel:"الهاتف", directionsBtn:"كيف نصل؟", wazeBtn:"Waze", mapsBtn:"خرائط جوجل",
+      siteBtn:"الموقع الإلكتروني", instaBtn:"إنستغرام", filterAria:"تصفية حسب الفئة", loading:"جارٍ تحميل البيانات من الجداول…",
+      loadError:"تعذّر تحميل البيانات من الجدول. تأكدوا أن الجدول مشترك كـ‑\"أي شخص لديه الرابط – مشاهدة\".",
+      loaded:"متصل بالجداول · " },
+    en:{ liveTag:"Connected to Google Sheets", aboutTitle:"About the Trail", emptyState:"Choose a point on the map to meet the story behind it.",
+      hostLabel:"Host", hoursLabel:"Opening hours", phoneLabel:"Phone", directionsBtn:"Get directions", wazeBtn:"Waze", mapsBtn:"Google Maps",
+      siteBtn:"Website", instaBtn:"Instagram", filterAria:"Filter by category", loading:"Loading data from the sheets…",
+      loadError:"Couldn't load data from the sheet. Make sure the sheet is shared as \"Anyone with the link – Viewer\".",
+      loaded:"Connected to sheets · " }
+  };
+
+  // =========================================================================
+  // 2. Google Sheets loader — no build step, reads live at page load
+  // =========================================================================
+  // Earlier versions used gviz's out:json endpoint, keyed by data.table.cols[].label.
+  // That relies on Google's own guess about whether row 1 "looks like" a header
+  // row, and with mostly-text columns (our case) that guess kept failing, so no
+  // points ever showed. The Tel Aviv reference map (which is proven reliable in
+  // production) sidesteps this entirely by reading out:csv instead - a CSV export
+  // has no such guessing: row 1 is always just whatever text is actually there,
+  // used directly as the header row. We do the same here.
+  function parseCSV(text){
+    var rows = [], row = [], field = "", inQuotes = false;
+    for(var i = 0; i < text.length; i++){
+      var c = text[i];
+      if(inQuotes){
+        if(c === '"'){
+          if(text[i+1] === '"'){ field += '"'; i++; }
+          else { inQuotes = false; }
+        } else {
+          field += c;
+        }
+      } else {
+        if(c === '"'){ inQuotes = true; }
+        else if(c === ','){ row.push(field); field = ""; }
+        else if(c === '\r'){ /* skip - CRLF handled via the \n below */ }
+        else if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ""; }
+        else { field += c; }
+      }
+    }
+    if(field.length || row.length){ row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  function fetchSheetRowsCSV(sheetName){
+    var url = "https://docs.google.com/spreadsheets/d/" + SPREADSHEET_ID + "/gviz/tq?tqx=out:csv&sheet=" + encodeURIComponent(sheetName);
+    return fetch(url).then(function(res){
+      if(!res.ok) throw new Error("CSV HTTP " + res.status);
+      return res.text();
+    }).then(function(text){
+      var table = parseCSV(text);
+      if(!table.length) throw new Error("CSV: empty sheet");
+
+      var labels = table[0].map(function(v){ return (v || "").trim(); });
+      var dataRows = table.slice(1);
+
+      var rows = dataRows.map(function(r){
+        var obj = {};
+        labels.forEach(function(key, i){
+          if(!key) return;
+          obj[key] = r[i] !== undefined ? r[i] : "";
+        });
+        return obj;
+      });
+      return rows;
+    });
+  }
+
+  // Fallback path, used only if the CSV request above fails (e.g. a network/CORS
+  // quirk specific to that endpoint). Reads the same data via gviz's JSON output,
+  // with a self-recovery step for Google's header-row auto-detection: when most
+  // columns are text (our case), Google sometimes fails to recognize row 1 as a
+  // header row, so data.table.cols[].label comes back empty - in that case we
+  // read the header names straight out of the sheet's own first data row instead.
+  function fetchSheetRowsJSON(sheetName){
+    var url = "https://docs.google.com/spreadsheets/d/" + SPREADSHEET_ID + "/gviz/tq?tqx=out:json&headers=1&sheet=" + encodeURIComponent(sheetName);
+    return fetch(url).then(function(res){
+      if(!res.ok) throw new Error("JSON HTTP " + res.status);
+      return res.text();
+    }).then(function(text){
+      var m = text.match(/setResponse\(([\s\S]*)\);?\s*$/);
+      if(!m) throw new Error("JSON: unexpected response (sheet likely not public)");
+      var data = JSON.parse(m[1]);
+      if(!data.table || !data.table.cols) throw new Error("JSON: empty table");
+
+      var dataRows = data.table.rows || [];
+      var labels = data.table.cols.map(function(c){ return (c.label || "").trim(); });
+
+      var looksEmpty = labels.filter(Boolean).length < 2;
+      if(looksEmpty && dataRows.length){
+        labels = (dataRows[0].c || []).map(function(cell){
+          return (cell && cell.v !== null && cell.v !== undefined) ? String(cell.v).trim() : "";
+        });
+        dataRows = dataRows.slice(1);
+      }
+
+      var rows = dataRows.map(function(r){
+        var obj = {};
+        (r.c || []).forEach(function(cell, i){
+          var key = labels[i];
+          if(!key) return;
+          obj[key] = cell ? cell.v : "";
+        });
+        return obj;
+      });
+      return rows;
+    });
+  }
+
+  function fetchSheetRows(sheetName){
+    return fetchSheetRowsCSV(sheetName).catch(function(csvErr){
+      console.warn("Buqata map: CSV fetch failed, falling back to JSON", sheetName, csvErr);
+      return fetchSheetRowsJSON(sheetName).catch(function(jsonErr){
+        throw new Error("CSV: " + csvErr.message + " | JSON: " + jsonErr.message);
+      });
+    });
+  }
+
+  function truthy(v){
+    if(v === true) return true;
+    if(typeof v === "string") return v.trim().toUpperCase() === "TRUE";
+    return false;
+  }
+  function num(v){ var n = parseFloat(v); return isNaN(n) ? null : n; }
+  function str(v){ return (v === null || v === undefined) ? "" : String(v).trim(); }
+
+  function loadAll(){
+    return Promise.all([
+      fetchSheetRows(SHEET_NAMES.places),
+      fetchSheetRows(SHEET_NAMES.categories),
+      fetchSheetRows(SHEET_NAMES.settings)
+    ]).then(function(results){
+      var placeRows = results[0], catRows = results[1], settingRows = results[2];
+
+      var CATEGORIES = catRows
+        .filter(function(r){ return str(r["מזהה (לא לשנות)"]) && !str(r["מזהה (לא לשנות)"]).includes("הערה"); })
+        .map(function(r, i){
+          return {
+            id: str(r["מזהה (לא לשנות)"]),
+            name: { he: str(r["שם – עברית"]), ar: str(r["שם – ערבית"]), en: str(r["שם – אנגלית"]) },
+            color: r["צבע (הקס)"] ? ("#" + str(r["צבע (הקס)"]).replace(/^#/,"")) : FALLBACK_COLORS[i % FALLBACK_COLORS.length],
+            icon: ICONS[str(r["אייקון"])] ? str(r["אייקון"]) : "sparkle",
+            order: num(r["סדר תצוגה"]) || i
+          };
+        })
+        .sort(function(a,b){ return a.order - b.order; });
+
+      var PLACES = placeRows
+        .filter(function(r){ return str(r["ID"]) && truthy(r["פעיל"]); })
+        .map(function(r){
+          var cats = [r["קטגוריה א׳"], r["קטגוריה ב׳"], r["קטגוריה ג׳"]].map(str).filter(Boolean);
+          return {
+            id: str(r["ID"]),
+            name: { he: str(r["שם – עברית"]), ar: str(r["שם – ערבית"]), en: str(r["שם – אנגלית"]) },
+            host: { he: str(r["מארח/ת – עברית"]), ar: str(r["מארח/ת – ערבית"]), en: str(r["מארח/ת – אנגלית"]) },
+            story: { he: str(r["הסיפור – עברית"]), ar: str(r["הסיפור – ערבית"]), en: str(r["הסיפור – אנגלית"]) },
+            hours: { he: str(r["שעות פתיחה – עברית"]), ar: str(r["שעות פתיחה – ערבית"]), en: str(r["שעות פתיחה – אנגלית"]) },
+            cats: cats,
+            lat: num(r["קו רוחב (lat)"]),
+            lng: num(r["קו אורך (lng)"]),
+            phone: str(r["טלפון למארח"]),
+            website: str(r["קישור לאתר"]),
+            instagram: str(r["קישור לאינסטגרם"]),
+            facebook: str(r["קישור לפייסבוק"])
+          };
+        })
+        .filter(function(p){ return p.lat !== null && p.lng !== null; });
+
+      var SETTINGS = {};
+      settingRows.forEach(function(r){
+        var key = str(r["מפתח (לא לשנות)"]);
+        if(!key) return;
+        SETTINGS[key] = { he: str(r["עברית"]), ar: str(r["ערבית"]), en: str(r["אנגלית"]) };
+      });
+
+      return { CATEGORIES: CATEGORIES, PLACES: PLACES, SETTINGS: SETTINGS };
+    });
+  }
+
+  // =========================================================================
+  // 3. App state + rendering
+  // =========================================================================
+  var state = { lang:"he", activeCats:new Set(), selectedId:null, data:null, map:null, markers:{} };
+
+  function t(key){ return STRINGS[state.lang][key]; }
+  function loc(obj){ return (obj && (obj[state.lang] || obj.he)) || ""; }
+  function iconSvg(iconKey, cls, style){
+    var path = ICONS[iconKey] || ICONS.sparkle;
+    return '<svg class="'+(cls||"")+'" width="24" height="24" viewBox="0 0 24 24"'+(style?' style="'+style+'"':'')+'>'+path+'</svg>';
+  }
+
+  var elApp = document.getElementById("app");
+  var elFilters = document.getElementById("filters");
+  var elCard = document.getElementById("card");
+  var elCardEmpty = document.getElementById("card-empty");
+  var elCardPlace = document.getElementById("card-place");
+  var elBackdrop = document.getElementById("backdrop");
+  var elIntroBackdrop = document.getElementById("intro-backdrop");
+  var elStatusBanner = document.getElementById("status-banner");
+  var elStatusText = document.getElementById("status-text");
+
+  function safeGet(key){ try{ return localStorage.getItem(key); }catch(e){ return null; } }
+  function safeSet(key,val){ try{ localStorage.setItem(key,val); }catch(e){} }
+
+  function renderFilters(){
+    if(!state.data) return;
+    elFilters.setAttribute("aria-label", t("filterAria"));
+    var html = "";
+    state.data.CATEGORIES.forEach(function(c){
+      var pressed = state.activeCats.has(c.id);
+      html += '<button type="button" class="chip" data-cat="'+c.id+'" style="--chip-color:'+c.color+'" aria-pressed="'+pressed+'">'
+        + iconSvg(c.icon) + '<span>' + loc(c.name) + '</span></button>';
+    });
+    elFilters.innerHTML = html;
+    Array.prototype.forEach.call(elFilters.querySelectorAll(".chip"), function(btn){
+      btn.addEventListener("click", function(){
+        var id = btn.getAttribute("data-cat");
+        if(state.activeCats.has(id)) state.activeCats.delete(id); else state.activeCats.add(id);
+        renderFilters();
+        renderMarkers();
+      });
+    });
+  }
+
+  function catById(id){ return state.data.CATEGORIES.filter(function(c){ return c.id===id; })[0]; }
+
+  function placeVisible(p){
+    if(state.activeCats.size === 0) return true;
+    return p.cats.some(function(c){ return state.activeCats.has(c); });
+  }
+
+  function renderMarkers(){
+    if(!state.map || !state.data) return;
+    Object.keys(state.markers).forEach(function(id){ state.map.removeLayer(state.markers[id]); });
+    state.markers = {};
+    state.data.PLACES.forEach(function(p){
+      if(!placeVisible(p)) return;
+      var mainCat = catById(p.cats[0]) || state.data.CATEGORIES[0];
+      if(!mainCat) return;
+      var html = '<div class="leaflet-marker-pin'+(state.selectedId===p.id?" selected":"")+'" style="--m-color:'+mainCat.color+'">'
+        + '<div class="dot">' + iconSvg(mainCat.icon) + '</div></div>';
+      var icon = L.divIcon({ html: html, className:"", iconSize:[38,38], iconAnchor:[19,19] });
+      var marker = L.marker([p.lat, p.lng], { icon: icon }).addTo(state.map);
+      marker.on("click", function(){ openPlace(p.id); });
+      state.markers[p.id] = marker;
+    });
+  }
+
+  function metaRow(iconId,label,valueHtml){
+    if(!valueHtml) return "";
+    return '<div class="card-meta-row">' + iconSvg(iconId) + '<div><span class="card-meta-label">'+label+'</span><span class="card-meta-val">'+valueHtml+'</span></div></div>';
+  }
+
+  function renderPlaceCard(p){
+    var catsHtml = p.cats.map(function(cid){
+      var c = catById(cid); if(!c) return "";
+      return '<span class="card-cat-tag" style="background:'+c.color+'">'+iconSvg(c.icon)+loc(c.name)+'</span>';
+    }).join("");
+    var hostHtml = loc(p.host) ? '<div class="card-host">'+t("hostLabel")+': <b>'+loc(p.host)+'</b></div>' : "";
+    var actions = "";
+    if(p.lat && p.lng){
+      var q = p.lat+","+p.lng;
+      actions += '<a class="btn btn-primary" target="_blank" rel="noopener" href="https://waze.com/ul?ll='+q+'&navigate=yes">'+iconSvg("sparkle")+t("wazeBtn")+'</a>';
+      actions += '<a class="btn btn-secondary" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query='+q+'">'+iconSvg("sparkle")+t("mapsBtn")+'</a>';
+    }
+    if(p.website){ actions += '<a class="btn btn-secondary" target="_blank" rel="noopener" href="'+p.website+'">'+iconSvg("cup")+t("siteBtn")+'</a>'; }
+    if(p.instagram){ actions += '<a class="btn btn-secondary" target="_blank" rel="noopener" href="https://instagram.com/'+p.instagram+'">'+iconSvg("cup")+t("instaBtn")+'</a>'; }
+    var phoneVal = p.phone ? '<a class="card-phone-link" href="tel:'+p.phone.replace(/[^0-9+]/g,"")+'">'+p.phone+'</a>' : "";
+
+    elCardPlace.innerHTML =
+      '<h3 class="card-title">'+loc(p.name)+'</h3>'
+      + '<div class="card-cats">'+catsHtml+'</div>'
+      + '<div class="card-story-label"><span>'+ (state.lang==="he"?"הסיפור":state.lang==="ar"?"القصة":"The story") +'</span><span class="line"></span></div>'
+      + hostHtml
+      + '<p class="card-story">'+loc(p.story)+'</p>'
+      + '<div class="card-meta">'+ metaRow("bed", t("hoursLabel"), loc(p.hours)) + metaRow("house-heart", t("phoneLabel"), phoneVal) + '</div>'
+      + '<div class="card-actions">'+actions+'</div>';
+  }
+
+  function openPlace(id){
+    var p = state.data.PLACES.filter(function(x){ return x.id===id; })[0];
+    if(!p) return;
+    state.selectedId = id;
+    renderPlaceCard(p);
+    elCardEmpty.hidden = true; elCardPlace.hidden = false;
+    elCard.classList.add("open"); elBackdrop.classList.add("open");
+    renderMarkers();
+    if(state.map) state.map.panTo([p.lat, p.lng]);
+    elCard.scrollTop = 0;
+  }
+  function closePlace(){
+    state.selectedId = null;
+    elCard.classList.remove("open"); elBackdrop.classList.remove("open");
+    elCardEmpty.hidden = false; elCardPlace.hidden = true;
+    renderMarkers();
+  }
+
+  function applySettingsText(){
+    if(!state.data) return;
+    var s = state.data.SETTINGS;
+    if(s.brand_title) document.getElementById("brand-title-el").textContent = loc(s.brand_title);
+    if(s.intro_title) document.getElementById("intro-title-el").textContent = loc(s.intro_title);
+    if(s.intro_body) document.getElementById("intro-body-el").textContent = loc(s.intro_body);
+    if(s.intro_cta) document.getElementById("intro-cta").textContent = loc(s.intro_cta);
+  }
+
+  function applyStaticText(){
+    Array.prototype.forEach.call(document.querySelectorAll("[data-t]"), function(el){
+      var key = el.getAttribute("data-t");
+      var val = STRINGS[state.lang][key];
+      if(val !== undefined) el.textContent = val;
+    });
+    applySettingsText();
+  }
+
+  function setLang(lang){
+    state.lang = lang;
+    var dir = lang === "en" ? "ltr" : "rtl";
+    elApp.setAttribute("dir", dir); elApp.setAttribute("lang", lang);
+    Array.prototype.forEach.call(document.querySelectorAll(".lang-switch button"), function(btn){
+      btn.setAttribute("aria-pressed", btn.getAttribute("data-lang") === lang ? "true":"false");
+    });
+    applyStaticText();
+    renderFilters();
+    renderMarkers();
+    if(state.selectedId){
+      var p = state.data.PLACES.filter(function(x){ return x.id===state.selectedId; })[0];
+      if(p) renderPlaceCard(p);
+    }
+    safeSet("buqata_lang_live", lang);
+  }
+
+  function showIntro(){ elIntroBackdrop.hidden = false; }
+  function hideIntro(){ elIntroBackdrop.hidden = true; safeSet("buqata_intro_seen_live","1"); }
+
+  document.getElementById("about-btn").addEventListener("click", showIntro);
+  document.getElementById("intro-cta").addEventListener("click", hideIntro);
+  document.getElementById("card-close-btn").addEventListener("click", closePlace);
+  elBackdrop.addEventListener("click", closePlace);
+  Array.prototype.forEach.call(document.querySelectorAll(".lang-switch button"), function(btn){
+    btn.addEventListener("click", function(){ setLang(btn.getAttribute("data-lang")); });
+  });
+
+  // =========================================================================
+  // 4. Boot
+  // =========================================================================
+  state.map = L.map("leaflet-map", { zoomControl:true }).setView(MAP_CENTER, MAP_ZOOM);
+  // Tile source, take 2: tile.openstreetmap.org (volunteer-run, blocks real
+  // app traffic) and CARTO's basemap tiles (now require a free API key,
+  // carto.com/basemaps/apikey) both didn't work without a key. Using Esri's
+  // public World Street Map service instead - it's free to use like this,
+  // no key/signup needed, and is a standard, well-established choice for
+  // exactly this kind of small Leaflet app.
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
+    maxZoom: 19,
+    attribution: 'Tiles &copy; <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a> &mdash; Esri, HERE, Garmin, FAO, NOAA, USGS'
+  }).addTo(state.map);
+
+  var savedLang = safeGet("buqata_lang_live") || "he";
+  state.lang = savedLang;
+  elApp.setAttribute("dir", savedLang==="en"?"ltr":"rtl");
+  elApp.setAttribute("lang", savedLang);
+  Array.prototype.forEach.call(document.querySelectorAll(".lang-switch button"), function(btn){
+    btn.setAttribute("aria-pressed", btn.getAttribute("data-lang")===savedLang ? "true":"false");
+  });
+  elStatusText.textContent = t("loading");
+
+  loadAll().then(function(data){
+    state.data = data;
+    applyStaticText();
+    renderFilters();
+    renderMarkers();
+    elStatusBanner.classList.remove("error");
+    elStatusText.textContent = t("loaded") + data.PLACES.length;
+    setTimeout(function(){ elStatusBanner.style.display = "none"; }, 3500);
+
+    if(!safeGet("buqata_intro_seen_live")){ showIntro(); }
+  }).catch(function(err){
+    console.error("Buqata map: failed to load sheet data", err);
+    elStatusBanner.classList.add("error");
+    // Show the raw error too (not just the friendly message) so a screenshot
+    // of the banner is enough to diagnose the real cause remotely, without
+    // needing to open the browser console.
+    elStatusText.textContent = t("loadError") + " [" + (err && err.message ? err.message : err) + "]";
+  });
+
+})();
+</script>
+</body>
+</html>
