@@ -339,8 +339,8 @@
     categories: "קטגוריות",
     settings:   "הגדרות"
   };
-  var MAP_CENTER = [33.2115, 35.7995]; // בוקעתא
-  var MAP_ZOOM = 15;
+  var MAP_CENTER = [33.2115, 35.7995]; // בוקעתא - שימוש ראשוני בלבד, עד שהמקומות נטענים
+  var MAP_ZOOM = 15; // שימוש ראשוני בלבד - ראו fitMapToPlaces() שמחשבת זום/מרכז אוטומטית
 
   // Fallback colors if a category row in the Sheet has no color / fails to load.
   var FALLBACK_COLORS = ["#B4802F","#B85471","#586A42","#8A5A3B","#3F7185","#544C74"];
@@ -628,6 +628,24 @@
     });
   }
 
+  // Auto-fit the initial view to whatever places are actually in the sheet,
+  // so the starting zoom/center always shows every point in one glance -
+  // no manual coordinates to maintain, this just recomputes itself from
+  // the same lat/lng values the markers use.
+  function fitMapToPlaces(){
+    if(!state.map || !state.data) return;
+    var pts = state.data.PLACES
+      .filter(function(p){ return typeof p.lat === "number" && typeof p.lng === "number"; })
+      .map(function(p){ return [p.lat, p.lng]; });
+    if(pts.length === 0){
+      state.map.setView(MAP_CENTER, MAP_ZOOM);
+    } else if(pts.length === 1){
+      state.map.setView(pts[0], MAP_ZOOM);
+    } else {
+      state.map.fitBounds(L.latLngBounds(pts), { padding: [36, 36], maxZoom: 17 });
+    }
+  }
+
   function metaRow(iconId,label,valueHtml){
     if(!valueHtml) return "";
     return '<div class="card-meta-row">' + iconSvg(iconId) + '<div><span class="card-meta-label">'+label+'</span><span class="card-meta-val">'+valueHtml+'</span></div></div>';
@@ -781,6 +799,7 @@
     applyStaticText();
     renderFilters();
     renderMarkers();
+    fitMapToPlaces();
     elStatusBanner.classList.remove("error");
     elStatusText.textContent = t("loaded") + data.PLACES.length;
     setTimeout(function(){ elStatusBanner.style.display = "none"; }, 3500);
