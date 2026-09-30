@@ -180,23 +180,32 @@
   #backdrop.open{ opacity:1; pointer-events:auto; }
 
   #card{
-    position:fixed; inset-inline:0; bottom:0; z-index:1025;
+    /* z-index sits above .topbar/.filters (1029-1030) on purpose: this is a
+       modal-like popup, so once it's open it should never be visually covered
+       by the sticky header/filter bar, even when its own content (and so the
+       filter bar wrapping to extra rows above it) makes it tall. See the
+       project notes for the bug this fixes. */
+    position:fixed; inset-inline:0; bottom:0; z-index:1031;
     max-height:80vh; max-height:80dvh;
     background:var(--surface-raised);
     border-start-start-radius:20px; border-start-end-radius:20px;
     box-shadow:var(--shadow); transform:translateY(102%);
     transition:transform .32s cubic-bezier(.32,.72,0,1);
-    overflow-y:auto; overscroll-behavior:contain;
-    padding-bottom:env(safe-area-inset-bottom,0px);
+    display:flex; flex-direction:column; overscroll-behavior:contain;
   }
   #card.open{ transform:translateY(0); }
-  .card-grip{ width:36px; height:4px; border-radius:99px; background:var(--line-strong); margin:10px auto 2px; }
+  .card-grip{ width:36px; height:4px; border-radius:99px; background:var(--line-strong); margin:10px auto 2px; flex:none; }
   .card-close{
     position:absolute; inset-inline-end:12px; top:14px; z-index:2;
     width:32px; height:32px; border-radius:50%; background:var(--surface);
     border:1px solid var(--line); display:flex; align-items:center; justify-content:center; color:var(--ink-soft);
   }
   .card-close svg{ width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:2; }
+  /* The close button and grip sit outside .card-scroll on purpose, so they
+     stay pinned in place no matter how long the place's content is - only
+     .card-scroll itself scrolls (both on mobile and on desktop, see the
+     min-width:860px block below), so the close button is always reachable. */
+  .card-scroll{ overflow-y:auto; flex:1; min-height:0; padding-bottom:env(safe-area-inset-bottom,0px); }
 
   .card-empty{ padding:40px 24px 48px; text-align:center; color:var(--ink-faint); font-size:13.5px; line-height:1.6; }
   .card-empty svg{ width:30px; height:30px; stroke:var(--ink-faint); fill:none; stroke-width:1.5; margin-bottom:10px; }
@@ -298,7 +307,7 @@
     <aside id="card" aria-live="polite">
       <div class="card-grip"></div>
       <button type="button" class="card-close" id="card-close-btn" aria-label="סגירה">
-        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
       </button>
       <div class="card-scroll">
         <div id="card-empty" class="card-empty">
@@ -801,8 +810,11 @@
     renderMarkers();
     fitMapToPlaces();
     elStatusBanner.classList.remove("error");
-    elStatusText.textContent = t("loaded") + data.PLACES.length;
-    setTimeout(function(){ elStatusBanner.style.display = "none"; }, 3500);
+    // On success we just hide the loading banner - no "connected to sheets"
+    // message shown to visitors. It still shows briefly while loading (see
+    // "loading" text above), and the error banner below is unchanged, since
+    // that one is genuinely useful for spotting a real problem.
+    elStatusBanner.style.display = "none";
 
     if(!safeGet("buqata_intro_seen_live")){ showIntro(); }
   }).catch(function(err){
