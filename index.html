@@ -368,17 +368,20 @@
       hostLabel:"מארח/ת", hoursLabel:"שעות פעילות", phoneLabel:"טלפון", directionsBtn:"איך מגיעים?", wazeBtn:"Waze", mapsBtn:"Google Maps",
       siteBtn:"אתר", instaBtn:"אינסטגרם", filterAria:"סינון לפי קטגוריה", loading:"טוען נתונים מהגיליונות…",
       loadError:"לא הצלחתי לטעון את הנתונים מהגיליון. ודאו שהגיליון משותף כ‑\"כל מי שיש לו את הקישור – צפייה\".",
-      loaded:"מחובר לגיליונות · " },
+      loaded:"מחובר לגיליונות · ",
+      introDefaultBody:"רדו מהכביש הראשי, היכנסו פנימה, ולחצו על הנקודות במפה כדי לגלות מקומות, אנשים וסיפורים מתוך בוקעתא." },
     ar:{ liveTag:"متصل بجداول Google", aboutTitle:"عن المسار", emptyState:"اختاروا نقطة على الخريطة للقاء القصة التي تقف وراءها.",
       hostLabel:"المضيف/ة", hoursLabel:"ساعات العمل", phoneLabel:"الهاتف", directionsBtn:"كيف نصل؟", wazeBtn:"Waze", mapsBtn:"خرائط جوجل",
       siteBtn:"الموقع الإلكتروني", instaBtn:"إنستغرام", filterAria:"تصفية حسب الفئة", loading:"جارٍ تحميل البيانات من الجداول…",
       loadError:"تعذّر تحميل البيانات من الجدول. تأكدوا أن الجدول مشترك كـ‑\"أي شخص لديه الرابط – مشاهدة\".",
-      loaded:"متصل بالجداول · " },
+      loaded:"متصل بالجداول · ",
+      introDefaultBody:"انزلوا عن الطريق الرئيسي، ادخلوا إلى الداخل، واضغطوا على النقاط على الخريطة لاكتشاف أماكن وأشخاص وقصص من بقعاتا." },
     en:{ liveTag:"Connected to Google Sheets", aboutTitle:"About the Trail", emptyState:"Choose a point on the map to meet the story behind it.",
       hostLabel:"Host", hoursLabel:"Opening hours", phoneLabel:"Phone", directionsBtn:"Get directions", wazeBtn:"Waze", mapsBtn:"Google Maps",
       siteBtn:"Website", instaBtn:"Instagram", filterAria:"Filter by category", loading:"Loading data from the sheets…",
       loadError:"Couldn't load data from the sheet. Make sure the sheet is shared as \"Anyone with the link – Viewer\".",
-      loaded:"Connected to sheets · " }
+      loaded:"Connected to sheets · ",
+      introDefaultBody:"Step off the main road, come on in, and tap the points on the map to discover places, people and stories from Buq'ata." }
   };
 
   // =========================================================================
@@ -730,6 +733,12 @@
       btn.setAttribute("aria-pressed", btn.getAttribute("data-lang") === lang ? "true":"false");
     });
     applyStaticText();
+    // applySettingsText() (called from applyStaticText) only touches the
+    // intro text once real sheet data has loaded - if someone switches
+    // language while still on the built-in fallback welcome text (data not
+    // loaded yet, or failed), keep that fallback in sync with the chosen
+    // language too.
+    if(!state.data){ document.getElementById("intro-body-el").textContent = t("introDefaultBody"); }
     renderFilters();
     renderMarkers();
     if(state.selectedId){
@@ -803,6 +812,18 @@
   });
   elStatusText.textContent = t("loading");
 
+  // The welcome popup must not depend on the Google Sheets fetch succeeding -
+  // a real visitor on a flaky mobile connection (this is exactly the QR-code-
+  // in-the-field use case) could easily hit a slow or failed request, and the
+  // popup used to only show inside the success branch below, so it silently
+  // never appeared for them. So: show it right away with a sensible built-in
+  // default message, independent of the data load. If the sheet does load
+  // successfully, applyStaticText() (below) still overwrites it with the
+  // custom text from the Settings tab, same as before - this only changes
+  // when the popup is guaranteed to appear, not what it can say.
+  document.getElementById("intro-body-el").textContent = t("introDefaultBody");
+  if(!safeGet("buqata_intro_seen_live")){ showIntro(); }
+
   loadAll().then(function(data){
     state.data = data;
     applyStaticText();
@@ -815,8 +836,6 @@
     // "loading" text above), and the error banner below is unchanged, since
     // that one is genuinely useful for spotting a real problem.
     elStatusBanner.style.display = "none";
-
-    if(!safeGet("buqata_intro_seen_live")){ showIntro(); }
   }).catch(function(err){
     console.error("Buqata map: failed to load sheet data", err);
     elStatusBanner.classList.add("error");
