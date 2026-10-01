@@ -33,36 +33,41 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@500;600;700&family=Noto+Serif+Hebrew:wght@500;600;700&family=Noto+Serif+Arabic:wght@500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Hebrew:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@500;600&family=IBM+Plex+Sans+Hebrew:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@500;600&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 
 <style>
   :root{
-    --bg:#F1F2E9; --surface:#FDFCF7; --surface-raised:#FFFFFF;
-    --ink:#221F1A; --ink-soft:#615A4B; --ink-faint:#8C8471;
-    --line:#DEDACB; --line-strong:#C9C3AF;
-    --cherry:#B85471; --olive:#586A42; --gold:#B4802F;
-    --soil:#8A5A3B; --teal:#3F7185; --plum:#544C74;
-    --shadow:0 12px 32px -12px rgba(34,31,26,0.28);
-    --shadow-sm:0 2px 10px -4px rgba(34,31,26,0.25);
+    /* Palette from Ron's reference image: terracotta, sky, brick, sage,
+       olive, deep (sampled directly from the swatches she sent). */
+    --bg:#F3F1E4; --surface:#FDFCF6; --surface-raised:#FFFFFF;
+    --ink:#262B18; --ink-soft:#585C42; --ink-faint:#8B8F74;
+    --line:#E2DFC9; --line-strong:#D0CAAA;
+    --terracotta:#DD6B38; --sky:#90B9C6; --brick:#5F2519;
+    --sage:#C2C3A0; --olive:#535830; --deep:#262B18;
+    --accent:var(--terracotta); --accent-ink:#FFFFFF;
+    --shadow:0 12px 32px -12px rgba(38,43,24,0.28);
+    --shadow-sm:0 2px 10px -4px rgba(38,43,24,0.25);
     color-scheme:light;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --bg:#17181A; --surface:#1F2023; --surface-raised:#25262A;
-      --ink:#F2EEE3; --ink-soft:#BDB6A5; --ink-faint:#847D6C;
-      --line:#33352F; --line-strong:#42443C;
-      --cherry:#DD8FA3; --olive:#94AC77; --gold:#DCAB5F;
-      --soil:#BB8C6A; --teal:#7DB0C0; --plum:#A79CD1;
+      --bg:#1B1C13; --surface:#232419; --surface-raised:#2B2C1F;
+      --ink:#F1EEDF; --ink-soft:#C9C4A6; --ink-faint:#8F8A6E;
+      --line:#3A3B29; --line-strong:#4A4B35;
+      --terracotta:#E8835C; --sky:#A9CDD8; --brick:#9C5240;
+      --sage:#D6D7B6; --olive:#7E8552; --deep:#F1EEDF;
+      --accent:var(--terracotta); --accent-ink:#1B1C13;
       color-scheme:dark;
     }
   }
   :root[data-theme="dark"]{
-    --bg:#17181A; --surface:#1F2023; --surface-raised:#25262A;
-    --ink:#F2EEE3; --ink-soft:#BDB6A5; --ink-faint:#847D6C;
-    --line:#33352F; --line-strong:#42443C;
-    --cherry:#DD8FA3; --olive:#94AC77; --gold:#DCAB5F;
-    --soil:#BB8C6A; --teal:#7DB0C0; --plum:#A79CD1;
+    --bg:#1B1C13; --surface:#232419; --surface-raised:#2B2C1F;
+    --ink:#F1EEDF; --ink-soft:#C9C4A6; --ink-faint:#8F8A6E;
+    --line:#3A3B29; --line-strong:#4A4B35;
+    --terracotta:#E8835C; --sky:#A9CDD8; --brick:#9C5240;
+    --sage:#D6D7B6; --olive:#7E8552; --deep:#F1EEDF;
+    --accent:var(--terracotta); --accent-ink:#1B1C13;
     color-scheme:dark;
   }
 
@@ -74,18 +79,18 @@
   #app{
     height:100%; min-height:100%; display:flex; flex-direction:column;
     background:var(--bg); color:var(--ink);
-    font-family:'Noto Sans','Noto Sans Hebrew','Noto Sans Arabic',sans-serif;
+    font-family:'IBM Plex Sans','IBM Plex Sans Hebrew','IBM Plex Sans Arabic',sans-serif;
+    font-weight:500;
     overflow:hidden;
   }
-  #app[dir="rtl"]{ font-family:'Noto Sans Hebrew','Noto Sans Arabic','Noto Sans',sans-serif; }
-  #app[lang="ar"]{ font-family:'Noto Sans Arabic','Noto Sans Hebrew','Noto Sans',sans-serif; }
+  #app[dir="rtl"]{ font-family:'IBM Plex Sans Hebrew','IBM Plex Sans Arabic','IBM Plex Sans',sans-serif; }
+  #app[lang="ar"]{ font-family:'IBM Plex Sans Arabic','IBM Plex Sans Hebrew','IBM Plex Sans',sans-serif; }
 
+  /* One typeface family everywhere (medium for body text, semibold for
+     headings/emphasis) instead of a separate serif display face. */
   h1,h2,h3,.display{
-    font-family:'Noto Serif','Noto Serif Hebrew','Noto Serif Arabic',serif;
     font-weight:600; text-wrap:balance; margin:0;
   }
-  [dir="rtl"] h1,[dir="rtl"] h2,[dir="rtl"] h3,[dir="rtl"] .display{ font-family:'Noto Serif Hebrew','Noto Serif Arabic','Noto Serif',serif; }
-  [lang="ar"] h1,[lang="ar"] h2,[lang="ar"] h3,[lang="ar"] .display{ font-family:'Noto Serif Arabic','Noto Serif Hebrew','Noto Serif',serif; }
 
   button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; }
   a{ color:inherit; }
@@ -110,15 +115,9 @@
     padding:12px 16px; background:var(--surface); border-bottom:1px solid var(--line);
   }
   .brand{ display:flex; align-items:center; gap:10px; min-width:0; }
-  .brand-mark{
-    width:34px; height:34px; flex:none; border-radius:50%;
-    background:linear-gradient(155deg,var(--cherry),var(--olive));
-    display:flex; align-items:center; justify-content:center;
-  }
-  .brand-mark svg{ width:18px; height:18px; stroke:#fff; fill:none; stroke-width:1.8; }
   .brand-text{ min-width:0; }
-  .brand-title{ font-size:16px; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .brand-sub{ font-size:10.5px; color:var(--ink-faint); letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .brand-title{ font-size:19px; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .brand-sub{ font-size:12.5px; color:var(--ink-soft); line-height:1.3; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .top-actions{ display:flex; align-items:center; gap:6px; flex:none; }
   .lang-switch{ position:relative; }
   .lang-menu{
@@ -128,7 +127,7 @@
     min-width:130px; z-index:1035; list-style:none;
   }
   .lang-menu[hidden]{ display:none; }
-  .lang-menu button{ padding:9px 12px; border-radius:9px; font-size:13px; color:var(--ink-soft); text-align:start; width:100%; }
+  .lang-menu button{ padding:9px 12px; border-radius:9px; font-size:15px; color:var(--ink-soft); text-align:start; width:100%; }
   .lang-menu button[aria-pressed="true"]{ background:var(--bg); color:var(--ink); font-weight:600; }
   .icon-btn{
     width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
@@ -144,7 +143,7 @@
   .chip{
     flex:none; display:flex; align-items:center; gap:6px;
     padding:7px 12px; border-radius:999px; border:1px solid var(--line-strong);
-    background:var(--surface); font-size:12.5px; color:var(--ink-soft); white-space:nowrap;
+    background:var(--surface); font-size:14px; color:var(--ink-soft); white-space:nowrap;
   }
   .chip svg{ width:14px; height:14px; stroke:var(--chip-color,currentColor); fill:none; stroke-width:1.9; }
   .chip[aria-pressed="true"]{ background:var(--chip-color); border-color:var(--chip-color); color:#fff; }
@@ -154,23 +153,26 @@
   .map-wrap{ position:relative; flex:1; min-width:0; }
   #leaflet-map{ position:absolute; inset:0; width:100%; height:100%; background:var(--bg); }
 
+  /* One uniform accent color for every marker (not per-category anymore -
+     keeps the map simple/legible against the gray basemap); the icon glyph
+     inside still varies by the place's category, just not its color. */
   .leaflet-marker-pin{ display:flex; align-items:center; justify-content:center; }
   .leaflet-marker-pin .dot{
-    width:32px; height:32px; border-radius:50%; background:var(--m-color);
+    width:46px; height:46px; border-radius:50%; background:var(--accent);
     border:3px solid var(--surface); box-shadow:var(--shadow-sm);
     display:flex; align-items:center; justify-content:center;
   }
-  .leaflet-marker-pin svg{ width:16px; height:16px; stroke:#fff; fill:none; stroke-width:2.3; }
+  .leaflet-marker-pin svg{ width:23px; height:23px; stroke:var(--accent-ink); fill:none; stroke-width:2.1; }
   .leaflet-marker-pin.selected .dot{ border-color:var(--ink); }
 
   .status-banner{
     position:absolute; inset-inline:14px; top:14px; z-index:1005;
     background:var(--surface); border:1px solid var(--line); border-radius:12px;
-    padding:10px 14px; font-size:12.5px; color:var(--ink-soft); box-shadow:var(--shadow-sm);
+    padding:10px 14px; font-size:14px; color:var(--ink-soft); box-shadow:var(--shadow-sm);
     display:flex; align-items:center; gap:8px;
   }
   .status-banner.error{ color:#9B3B3B; border-color:#D9AFAF; }
-  .status-dot{ width:8px; height:8px; border-radius:50%; background:var(--gold); flex:none; animation:blink 1.4s ease-in-out infinite; }
+  .status-dot{ width:8px; height:8px; border-radius:50%; background:var(--accent); flex:none; animation:blink 1.4s ease-in-out infinite; }
   @keyframes blink{ 0%,100%{opacity:.4;} 50%{opacity:1;} }
 
   #backdrop{
@@ -207,32 +209,32 @@
      min-width:860px block below), so the close button is always reachable. */
   .card-scroll{ overflow-y:auto; flex:1; min-height:0; padding-bottom:env(safe-area-inset-bottom,0px); }
 
-  .card-empty{ padding:40px 24px 48px; text-align:center; color:var(--ink-faint); font-size:13.5px; line-height:1.6; }
+  .card-empty{ padding:40px 24px 48px; text-align:center; color:var(--ink-faint); font-size:15px; line-height:1.6; }
   .card-empty svg{ width:30px; height:30px; stroke:var(--ink-faint); fill:none; stroke-width:1.5; margin-bottom:10px; }
 
   .card-body{ padding:18px 20px 28px; }
-  .card-title{ font-size:22px; line-height:1.25; margin-bottom:2px; }
+  .card-title{ font-size:25px; line-height:1.25; margin-bottom:2px; }
   .card-cats{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; margin-bottom:10px; }
-  .card-cat-tag{ display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:4px 9px; border-radius:999px; color:#fff; }
+  .card-cat-tag{ display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:600; padding:4px 9px; border-radius:999px; color:#fff; }
   .card-cat-tag svg{ width:11px; height:11px; stroke:#fff; fill:none; stroke-width:2; }
 
-  .card-story-label{ display:flex; align-items:center; gap:7px; margin-top:18px; margin-bottom:8px; font-size:11px; letter-spacing:.04em; color:var(--ink-faint); text-transform:uppercase; }
+  .card-story-label{ display:flex; align-items:center; gap:7px; margin-top:18px; margin-bottom:8px; font-size:12.5px; letter-spacing:.04em; color:var(--ink-faint); text-transform:uppercase; }
   .card-story-label .line{ flex:1; height:1px; background:var(--line); }
-  .card-host{ font-size:13.5px; color:var(--ink-soft); margin-bottom:6px; }
+  .card-host{ font-size:15px; color:var(--ink-soft); margin-bottom:6px; }
   .card-host b{ color:var(--ink); font-weight:600; }
-  .card-story{ font-size:15px; line-height:1.75; color:var(--ink); }
+  .card-story{ font-size:17px; line-height:1.75; color:var(--ink); }
 
   .card-meta{ margin-top:22px; display:flex; flex-direction:column; gap:11px; }
-  .card-meta-row{ display:flex; align-items:flex-start; gap:10px; font-size:13.5px; }
+  .card-meta-row{ display:flex; align-items:flex-start; gap:10px; font-size:15px; }
   .card-meta-row svg{ width:17px; height:17px; flex:none; margin-top:1px; stroke:var(--ink-soft); fill:none; stroke-width:1.7; }
-  .card-meta-label{ color:var(--ink-faint); font-size:11px; display:block; margin-bottom:1px; }
+  .card-meta-label{ color:var(--ink-faint); font-size:12.5px; display:block; margin-bottom:1px; }
   .card-meta-val{ color:var(--ink); }
   .card-phone-link{ text-decoration:none; border-bottom:1px solid var(--line-strong); }
 
   .card-actions{ margin-top:20px; display:flex; flex-wrap:wrap; gap:9px; }
-  .btn{ display:inline-flex; align-items:center; gap:7px; padding:11px 16px; border-radius:12px; font-size:13.5px; font-weight:600; text-decoration:none; border:1px solid transparent; }
+  .btn{ display:inline-flex; align-items:center; gap:7px; padding:12px 18px; border-radius:12px; font-size:15px; font-weight:600; text-decoration:none; border:1px solid transparent; }
   .btn svg{ width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; }
-  .btn-primary{ background:var(--ink); color:var(--surface); }
+  .btn-primary{ background:var(--accent); color:var(--accent-ink); }
   .btn-secondary{ background:var(--surface); border-color:var(--line-strong); color:var(--ink); }
 
   #intro-backdrop{
@@ -246,10 +248,8 @@
     max-height:88vh; max-height:88dvh; overflow-y:auto;
   }
   @media (min-width:640px){ #intro-backdrop{ align-items:center; } .intro-modal{ border-radius:20px; } }
-  .intro-mark{ width:46px; height:46px; border-radius:50%; margin-bottom:16px; background:linear-gradient(155deg,var(--cherry),var(--olive)); display:flex; align-items:center; justify-content:center; }
-  .intro-mark svg{ width:24px; height:24px; stroke:#fff; fill:none; stroke-width:1.6; }
-  .intro-title{ font-size:23px; margin-bottom:14px; }
-  .intro-body{ font-size:14.5px; line-height:1.85; color:var(--ink-soft); white-space:pre-line; }
+  .intro-title{ font-size:26px; margin-bottom:14px; }
+  .intro-body{ font-size:16.5px; line-height:1.85; color:var(--ink-soft); white-space:pre-line; }
   .intro-cta{ margin-top:22px; width:100%; justify-content:center; padding:13px; }
 
   @media (min-width:860px){
@@ -272,11 +272,9 @@
 
   <header class="topbar">
     <div class="brand">
-      <div class="brand-mark">
-        <svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
       <div class="brand-text">
         <div class="brand-title" id="brand-title-el">נכנסים לבוקעתא</div>
+        <div class="brand-sub" id="brand-sub-el">מפת העסקים המקומיים, האנשים והנוף של בוקעתא</div>
       </div>
     </div>
     <div class="top-actions">
@@ -323,9 +321,6 @@
 
   <div id="intro-backdrop" hidden>
     <div class="intro-modal" role="dialog" aria-modal="true">
-      <div class="intro-mark">
-        <svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
       <h2 class="intro-title" id="intro-title-el">נכנסים לבוקעתא</h2>
       <p class="intro-body" id="intro-body-el"></p>
       <button type="button" class="btn btn-primary intro-cta" id="intro-cta">בואו נתחיל</button>
@@ -351,8 +346,10 @@
   var MAP_CENTER = [33.2115, 35.7995]; // בוקעתא - שימוש ראשוני בלבד, עד שהמקומות נטענים
   var MAP_ZOOM = 15; // שימוש ראשוני בלבד - ראו fitMapToPlaces() שמחשבת זום/מרכז אוטומטית
 
-  // Fallback colors if a category row in the Sheet has no color / fails to load.
-  var FALLBACK_COLORS = ["#B4802F","#B85471","#586A42","#8A5A3B","#3F7185","#544C74"];
+  // Fallback colors if a category row in the Sheet has no color / fails to
+  // load - picked from Ron's reference palette, with the two pale swatches
+  // (sky/sage) deepened a bit so white chip text/icons stay readable on them.
+  var FALLBACK_COLORS = ["#DD6B38","#5F2519","#535830","#4C7E8C","#8B8C5E","#262B18"];
 
   var ICONS = {
     "cup": '<path d="M5 8h13v4.5A5.5 5.5 0 0 1 12.5 18h-2A5.5 5.5 0 0 1 5 12.5V8Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 9.2h1.2a2.3 2.3 0 0 1 0 4.6H18"/><path d="M9 18v2.4M12 18v2.4" stroke-linecap="round"/>',
@@ -369,19 +366,22 @@
       siteBtn:"אתר", instaBtn:"אינסטגרם", filterAria:"סינון לפי קטגוריה", loading:"טוען נתונים מהגיליונות…",
       loadError:"לא הצלחתי לטעון את הנתונים מהגיליון. ודאו שהגיליון משותף כ‑\"כל מי שיש לו את הקישור – צפייה\".",
       loaded:"מחובר לגיליונות · ",
-      introDefaultBody:"רדו מהכביש הראשי, היכנסו פנימה, ולחצו על הנקודות במפה כדי לגלות מקומות, אנשים וסיפורים מתוך בוקעתא." },
+      introDefaultBody:"רדו מהכביש הראשי, היכנסו פנימה, ולחצו על הנקודות במפה כדי לגלות מקומות, אנשים וסיפורים מתוך בוקעתא.",
+      brandSubDefault:"מפת העסקים המקומיים, האנשים והנוף של בוקעתא" },
     ar:{ liveTag:"متصل بجداول Google", aboutTitle:"عن المسار", emptyState:"اختاروا نقطة على الخريطة للقاء القصة التي تقف وراءها.",
       hostLabel:"المضيف/ة", hoursLabel:"ساعات العمل", phoneLabel:"الهاتف", directionsBtn:"كيف نصل؟", wazeBtn:"Waze", mapsBtn:"خرائط جوجل",
       siteBtn:"الموقع الإلكتروني", instaBtn:"إنستغرام", filterAria:"تصفية حسب الفئة", loading:"جارٍ تحميل البيانات من الجداول…",
       loadError:"تعذّر تحميل البيانات من الجدول. تأكدوا أن الجدول مشترك كـ‑\"أي شخص لديه الرابط – مشاهدة\".",
       loaded:"متصل بالجداول · ",
-      introDefaultBody:"انزلوا عن الطريق الرئيسي، ادخلوا إلى الداخل، واضغطوا على النقاط على الخريطة لاكتشاف أماكن وأشخاص وقصص من بقعاتا." },
+      introDefaultBody:"انزلوا عن الطريق الرئيسي، ادخلوا إلى الداخل، واضغطوا على النقاط على الخريطة لاكتشاف أماكن وأشخاص وقصص من بقعاتا.",
+      brandSubDefault:"خريطة الأعمال المحلية والناس ومناظر بقعاتا الطبيعية" },
     en:{ liveTag:"Connected to Google Sheets", aboutTitle:"About the Trail", emptyState:"Choose a point on the map to meet the story behind it.",
       hostLabel:"Host", hoursLabel:"Opening hours", phoneLabel:"Phone", directionsBtn:"Get directions", wazeBtn:"Waze", mapsBtn:"Google Maps",
       siteBtn:"Website", instaBtn:"Instagram", filterAria:"Filter by category", loading:"Loading data from the sheets…",
       loadError:"Couldn't load data from the sheet. Make sure the sheet is shared as \"Anyone with the link – Viewer\".",
       loaded:"Connected to sheets · ",
-      introDefaultBody:"Step off the main road, come on in, and tap the points on the map to discover places, people and stories from Buq'ata." }
+      introDefaultBody:"Step off the main road, come on in, and tap the points on the map to discover places, people and stories from Buq'ata.",
+      brandSubDefault:"A map of Buq'ata's local businesses, people and landscape." }
   };
 
   // =========================================================================
@@ -631,9 +631,11 @@
       if(!placeVisible(p)) return;
       var mainCat = catById(p.cats[0]) || state.data.CATEGORIES[0];
       if(!mainCat) return;
-      var html = '<div class="leaflet-marker-pin'+(state.selectedId===p.id?" selected":"")+'" style="--m-color:'+mainCat.color+'">'
+      // The marker's color is one uniform accent (set in CSS) regardless of
+      // category now - only the icon glyph inside still varies by category.
+      var html = '<div class="leaflet-marker-pin'+(state.selectedId===p.id?" selected":"")+'">'
         + '<div class="dot">' + iconSvg(mainCat.icon) + '</div></div>';
-      var icon = L.divIcon({ html: html, className:"", iconSize:[38,38], iconAnchor:[19,19] });
+      var icon = L.divIcon({ html: html, className:"", iconSize:[52,52], iconAnchor:[26,26] });
       var marker = L.marker([p.lat, p.lng], { icon: icon }).addTo(state.map);
       marker.on("click", function(){ openPlace(p.id); });
       state.markers[p.id] = marker;
@@ -654,7 +656,8 @@
     } else if(pts.length === 1){
       state.map.setView(pts[0], MAP_ZOOM);
     } else {
-      state.map.fitBounds(L.latLngBounds(pts), { padding: [36, 36], maxZoom: 17 });
+      // maxZoom matches the gray basemap's native max zoom (16) - see Boot.
+      state.map.fitBounds(L.latLngBounds(pts), { padding: [36, 36], maxZoom: 16 });
     }
   }
 
@@ -682,7 +685,7 @@
     elCardPlace.innerHTML =
       '<h3 class="card-title">'+loc(p.name)+'</h3>'
       + '<div class="card-cats">'+catsHtml+'</div>'
-      + '<div class="card-story-label"><span>'+ (state.lang==="he"?"הסיפור":state.lang==="ar"?"القصة":"The story") +'</span><span class="line"></span></div>'
+      + '<div class="card-story-label"><span>'+ (state.lang==="he"?"על המארח/ת":state.lang==="ar"?"عن المضيف/ة":"About the host") +'</span><span class="line"></span></div>'
       + hostHtml
       + '<p class="card-story">'+loc(p.story)+'</p>'
       + '<div class="card-meta">'+ metaRow("bed", t("hoursLabel"), loc(p.hours)) + metaRow("house-heart", t("phoneLabel"), phoneVal) + '</div>'
@@ -711,6 +714,7 @@
     if(!state.data) return;
     var s = state.data.SETTINGS;
     if(s.brand_title) document.getElementById("brand-title-el").textContent = loc(s.brand_title);
+    if(s.brand_subtitle) document.getElementById("brand-sub-el").textContent = loc(s.brand_subtitle);
     if(s.intro_title) document.getElementById("intro-title-el").textContent = loc(s.intro_title);
     if(s.intro_body) document.getElementById("intro-body-el").textContent = loc(s.intro_body);
     if(s.intro_cta) document.getElementById("intro-cta").textContent = loc(s.intro_cta);
@@ -734,11 +738,14 @@
     });
     applyStaticText();
     // applySettingsText() (called from applyStaticText) only touches the
-    // intro text once real sheet data has loaded - if someone switches
-    // language while still on the built-in fallback welcome text (data not
-    // loaded yet, or failed), keep that fallback in sync with the chosen
-    // language too.
-    if(!state.data){ document.getElementById("intro-body-el").textContent = t("introDefaultBody"); }
+    // intro text and brand subtitle once real sheet data has loaded - if
+    // someone switches language while still on the built-in fallback text
+    // (data not loaded yet, or failed), keep that fallback in sync with the
+    // chosen language too.
+    if(!state.data){
+      document.getElementById("intro-body-el").textContent = t("introDefaultBody");
+      document.getElementById("brand-sub-el").textContent = t("brandSubDefault");
+    }
     renderFilters();
     renderMarkers();
     if(state.selectedId){
@@ -792,15 +799,19 @@
   // 4. Boot
   // =========================================================================
   state.map = L.map("leaflet-map", { zoomControl:true }).setView(MAP_CENTER, MAP_ZOOM);
-  // Tile source, take 2: tile.openstreetmap.org (volunteer-run, blocks real
-  // app traffic) and CARTO's basemap tiles (now require a free API key,
-  // carto.com/basemaps/apikey) both didn't work without a key. Using Esri's
-  // public World Street Map service instead - it's free to use like this,
-  // no key/signup needed, and is a standard, well-established choice for
-  // exactly this kind of small Leaflet app.
-  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
-    maxZoom: 19,
-    attribution: 'Tiles &copy; <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a> &mdash; Esri, HERE, Garmin, FAO, NOAA, USGS'
+  // Tile source, take 3: switched from Esri's colorful World Street Map to
+  // Esri's "Light Gray Canvas" basemap (same host/account as before, which
+  // we already know works with no key/signup - see the history above) for a
+  // simpler, neutral-gray background that doesn't compete with the colored
+  // place markers. It's two layers stacked: the plain gray base, plus a
+  // reference layer with light labels/roads on top for orientation.
+  var ESRI_GRAY = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/";
+  var ESRI_ATTRIBUTION = 'Tiles &copy; <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a> &mdash; Esri, HERE, Garmin, FAO, NOAA, USGS';
+  L.tileLayer(ESRI_GRAY + "World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+    maxZoom: 16, attribution: ESRI_ATTRIBUTION
+  }).addTo(state.map);
+  L.tileLayer(ESRI_GRAY + "World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}", {
+    maxZoom: 16, maxNativeZoom: 16
   }).addTo(state.map);
 
   var savedLang = safeGet("buqata_lang_live") || "he";
@@ -820,8 +831,10 @@
   // default message, independent of the data load. If the sheet does load
   // successfully, applyStaticText() (below) still overwrites it with the
   // custom text from the Settings tab, same as before - this only changes
-  // when the popup is guaranteed to appear, not what it can say.
+  // when the popup is guaranteed to appear, not what it can say. The brand
+  // subtitle follows the same pattern, for the same reason.
   document.getElementById("intro-body-el").textContent = t("introDefaultBody");
+  document.getElementById("brand-sub-el").textContent = t("brandSubDefault");
   if(!safeGet("buqata_intro_seen_live")){ showIntro(); }
 
   loadAll().then(function(data){
