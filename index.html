@@ -643,6 +643,12 @@
         if(state.activeCats.has(id)) state.activeCats.delete(id); else state.activeCats.add(id);
         renderFilters();
         renderMarkers();
+        // Re-fit the view to whatever places the new filter actually shows -
+        // otherwise a visitor zoomed into one part of the map who picks a
+        // category with places elsewhere just sees an empty map (Ron's
+        // report: picks "farming" while zoomed in, doesn't see the farms
+        // that are out of the current view).
+        fitMapToPlaces(state.data.PLACES.filter(placeVisible));
       });
     });
   }
@@ -673,13 +679,18 @@
     });
   }
 
-  // Auto-fit the initial view to whatever places are actually in the sheet,
-  // so the starting zoom/center always shows every point in one glance -
-  // no manual coordinates to maintain, this just recomputes itself from
-  // the same lat/lng values the markers use.
-  function fitMapToPlaces(){
+  // Auto-fit the view to whatever places should currently be visible, so the
+  // zoom/center always shows every relevant point in one glance - no manual
+  // coordinates to maintain, this just recomputes itself from the same
+  // lat/lng values the markers use. Called with no argument (or omitted) on
+  // first load, when every place counts; called with the filtered list from
+  // the category-chip handler, so switching filters re-frames the map to
+  // the places that filter actually shows, instead of leaving the view
+  // wherever it happened to be zoomed/panned before.
+  function fitMapToPlaces(places){
     if(!state.map || !state.data) return;
-    var pts = state.data.PLACES
+    var source = (places && places.length) ? places : state.data.PLACES;
+    var pts = source
       .filter(function(p){ return typeof p.lat === "number" && typeof p.lng === "number"; })
       .map(function(p){ return [p.lat, p.lng]; });
     if(pts.length === 0){
